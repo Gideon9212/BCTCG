@@ -1,5 +1,5 @@
 --Cat Machine
---Scripted by Konstak & poka-poka (e10-13)
+--Scripted by Konstak & poka-poka (e10-13). Effect 8 by Kooder.
 --Effect:
 -- (1) When summoned, place in defense. 
 -- (2) Twice per turn; cannot be destroyed. 
@@ -8,6 +8,7 @@
 -- (5) Cannot be tributed. Cannot be used as link material.
 -- (6) During your opponent's end phase, you can banish this face-up card on the field; You can search and add one monster from your deck to your hand. Skip your next draw phase when you use this effect.
 -- (7) effect If you control a fiend monster; Banish this card from the field then end the turn (mandatory).
+-- (8) If you have 6 or more cards in your Banish Zone, Once per turn, During your Main Phase 1: You can activate this effect; Draw 1 card from your Deck. It is now the End Phase.
 local s,id=GetID()
 function s.initial_effect(c)
     --to defense (1)
@@ -69,7 +70,7 @@ function s.initial_effect(c)
     e9:SetCode(EVENT_PHASE+PHASE_END)
     e9:SetCountLimit(1)
     e9:SetCondition(s.bancon)
-    e9:SetCost(aux.selfbanishcost)
+    e9:SetCost(Cost.SelfBanish)
     e9:SetOperation(s.banop)
     c:RegisterEffect(e9)
 	-- If control fiend, Self banish then End turn
@@ -95,6 +96,18 @@ function s.initial_effect(c)
 	e12:SetCondition(s.endturncon)
 	e12:SetOperation(s.endturnop)
 	c:RegisterEffect(e12)
+	-- If 6 or more cards in banish, draw 1 card then end turn
+	local e14=Effect.CreateEffect(c)
+	e14:SetDescription(aux.Stringid(id,2))
+	e14:SetCategory(CATEGORY_DRAW)
+	e14:SetProperty(EFFECT_FLAG_PLAYER_TARGET)
+	e14:SetType(EFFECT_TYPE_IGNITION)
+	e14:SetRange(LOCATION_MZONE)
+	e14:SetCountLimit(1)
+	e14:SetCondition(s.drcon)
+	e14:SetTarget(s.drtg)
+	e14:SetOperation(s.drop)
+	c:RegisterEffect(e14)
 end
 --(1)
 function s.deftg(e,tp,eg,ep,ev,re,r,rp,chk,chkc)
@@ -151,6 +164,29 @@ function s.endturncon(e,tp,eg,ep,ev,re,r,rp)
 end
 function s.endturnop(e,tp,eg,ep,ev,re,r,rp)
     Duel.BreakEffect()
+	Duel.SkipPhase(tp,PHASE_MAIN1,RESET_PHASE+PHASE_END,1)
+	local e1=Effect.CreateEffect(e:GetHandler())
+	e1:SetType(EFFECT_TYPE_FIELD)
+	e1:SetProperty(EFFECT_FLAG_PLAYER_TARGET)
+	e1:SetTargetRange(1,0)
+	e1:SetCode(EFFECT_CANNOT_BP)
+	e1:SetReset(RESET_PHASE+PHASE_END)
+	Duel.RegisterEffect(e1,tp)
+end
+--(8)
+function s.drcon(e,tp,eg,ep,ev,re,r,rp)
+	return Duel.IsExistingMatchingCard(aux.TRUE,e:GetHandlerPlayer(),LOCATION_REMOVED,0,6,nil) and Duel.IsPhase(PHASE_MAIN1)
+end
+function s.drtg(e,tp,eg,ep,ev,re,r,rp,chk)
+	if chk==0 then return true end
+	Duel.SetTargetPlayer(tp)
+	Duel.SetTargetParam(1)
+	Duel.SetOperationInfo(0,CATEGORY_DRAW,nil,0,tp,1)
+end
+function s.drop(e,tp,eg,ep,ev,re,r,rp)
+	local p,d=Duel.GetChainInfo(0,CHAININFO_TARGET_PLAYER,CHAININFO_TARGET_PARAM)
+	Duel.Draw(p,d,REASON_EFFECT)
+	Duel.BreakEffect()
 	Duel.SkipPhase(tp,PHASE_MAIN1,RESET_PHASE+PHASE_END,1)
 	local e1=Effect.CreateEffect(e:GetHandler())
 	e1:SetType(EFFECT_TYPE_FIELD)

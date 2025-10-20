@@ -1,5 +1,5 @@
 --Ice Cat
---Scripted by Konstak during beta, Scripted by Poka. Strings fixed by Gideon.
+--Scripted by Konstak during beta, Scripted by Poka. Strings fixed by Gideon. Effect 7 by Kooder.
 --Effect
 -- (1) Cannot be Normal Summoned/Set. Can only be Special Summoned (from your hand) while you control no monsters and cannot be Special Summoned by other means.
 -- (2) During either player's turn (Quick): You can Target 1 card on the field and banish this card on the field; negate that target until the end of this turn. You can only use this effect of "Ice Cat" once per turn. During your opponent's end phase after using this effect, move this card from your banish zone to GY.
@@ -7,6 +7,7 @@
 -- (4) If you control 3 or more monsters, Destroy this card.
 -- (5) If this card is destroyed while on the field; Banish it.
 -- (6) You can banish this card from your GY (Ignition); Special Summon 1 "Lesser Demon Cat" from your Deck to the field. Increase it's attack by 1000 when summoned this way.
+-- (7) If there is 10 or more cards in your banished face-up: You can pay 1000 LPs; Add this card from your banished to your Hand. You can only use this effect of "Ice Cat" once per turn.
 local s,id=GetID()
 function s.initial_effect(c)
     c:EnableUnsummonable()
@@ -75,6 +76,19 @@ function s.initial_effect(c)
 	e6:SetTarget(s.sptg2)
 	e6:SetOperation(s.spop2)
 	c:RegisterEffect(e6)
+	-- If 10 or more banished face-up, add this from your banish to hand
+	local e7=Effect.CreateEffect(c)
+	e7:SetDescription(aux.Stringid(id,4))
+	e7:SetCategory(CATEGORY_TOHAND)
+	e7:SetProperty(EFFECT_FLAG_PLAYER_TARGET)
+	e7:SetType(EFFECT_TYPE_IGNITION)
+	e7:SetRange(LOCATION_REMOVED)
+	e7:SetCountLimit(1)
+	e7:SetCost(s.thcost)
+	e7:SetCondition(s.thcon)
+	e7:SetTarget(s.thtg)
+	e7:SetOperation(s.thop)
+	c:RegisterEffect(e7)
 end
 --Special Summon Function
 function s.spcon(e,c)
@@ -188,4 +202,26 @@ function s.spop2(e,tp,eg,ep,ev,re,r,rp)
         e1:SetReset(RESET_EVENT+RESETS_STANDARD)
         tc:RegisterEffect(e1)
     end
+end
+--(7)
+function s.thcost(e,tp,eg,ep,ev,re,r,rp,chk)
+    if chk==0 then return Duel.CheckLPCost(tp,1000) end
+    Duel.PayLPCost(tp,1000)
+end
+function s.refilter(c,e,tp)
+    return c:IsFaceup()
+end
+function s.thcon(e,tp,eg,ep,ev,re,r,rp)
+	return Duel.IsExistingMatchingCard(s.refilter,e:GetHandlerPlayer(),LOCATION_REMOVED,0,10,nil)
+end
+function s.thtg(e,tp,eg,ep,ev,re,r,rp,chk)
+	if chk==0 then return true end
+	Duel.SetOperationInfo(0,CATEGORY_TOHAND,e:GetHandler(),1,0,0)
+end
+function s.thop(e,tp,eg,ep,ev,re,r,rp)
+	local c=e:GetHandler()
+	if c:IsRelateToEffect(e) then
+		Duel.SendtoHand(c,nil,REASON_EFFECT)
+		Duel.ConfirmCards(1-tp,c)
+	end
 end

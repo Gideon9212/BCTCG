@@ -1,9 +1,10 @@
 --Marauder Cat
---Scripted by Konstak.
+--Scripted by Konstak. Effect 4 by Kooder.
 --Effect:
 -- (1) When this card attacks, gain 800 ATK during the damage calulation only.
 -- (2) If this card is destroyed by battle; Draw a card then banish this card from your GY.
 -- (3) If this card is destroyed by a card effect; Add 1 Level 9 or lower monster from your deck to your hand then banish this card from your GY.
+-- (4) If you control no monster(s) while there is at least 3 or more Cards in your Banish Zone, You can Special Summon this card from your hand.
 local s,id=GetID()
 function s.initial_effect(c)
     -- Raise ATK once attack during calulation only (1)
@@ -17,7 +18,7 @@ function s.initial_effect(c)
     c:RegisterEffect(e1)
     -- If this card is destroyed by battle; Draw a card then banish this card from your GY. (2)
     local e2=Effect.CreateEffect(c)
-    e2:SetDescription(aux.Stringid(id,0))
+    e2:SetDescription(aux.Stringid(id,2))
     e2:SetCategory(CATEGORY_DRAW)
     e2:SetType(EFFECT_TYPE_SINGLE+EFFECT_TYPE_TRIGGER_F)
     e2:SetProperty(EFFECT_FLAG_DAMAGE_STEP)
@@ -37,6 +38,15 @@ function s.initial_effect(c)
     e3:SetTarget(s.dretg)
     e3:SetOperation(s.dreop)
     c:RegisterEffect(e3)
+	-- SP when you have no monsters and alteast 3 in banish
+	local e4=Effect.CreateEffect(c)
+    e4:SetDescription(aux.Stringid(id,3))
+    e4:SetType(EFFECT_TYPE_FIELD)
+    e4:SetCode(EFFECT_SPSUMMON_PROC)
+    e4:SetProperty(EFFECT_FLAG_UNCOPYABLE)
+    e4:SetRange(LOCATION_HAND)
+    e4:SetCondition(s.spcon)
+    c:RegisterEffect(e4)
 end
 --(1)
 function s.atkcon(e,tp,eg,ep,ev,re,r,rp)
@@ -87,4 +97,10 @@ function s.dreop(e,tp,eg,ep,ev,re,r,rp)
         Duel.ConfirmCards(1-tp,g)
         Duel.Remove(e:GetHandler(),POS_FACEUP,REASON_EFFECT)
     end
+end
+--(4)
+function s.spcon(e,c)
+    if c==nil then return true end
+    return Duel.GetFieldGroupCount(e:GetHandlerPlayer(),LOCATION_MZONE,0)==0
+        and Duel.IsExistingMatchingCard(aux.TRUE,e:GetHandlerPlayer(),LOCATION_REMOVED,0,3,nil)
 end
