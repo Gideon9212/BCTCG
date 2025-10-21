@@ -38,7 +38,7 @@ function s.initial_effect(c)
     c:RegisterEffect(e4)
 -- (4) If this card is in your GY, You can return 4 random cards from your opponent's banish zone to their deck; Add this card to your hand. You can only active this effect of "Dynasaurus Cat" once per duel.
 	local e5=Effect.CreateEffect(c)
-	e5:SetDescription(aux.Stringid(id,2))
+	e5:SetDescription(aux.Stringid(id,1))
 	e5:SetCategory(CATEGORY_TOHAND+CATEGORY_TODECK)
 	e5:SetType(EFFECT_TYPE_IGNITION)
 	e5:SetRange(LOCATION_GRAVE)
